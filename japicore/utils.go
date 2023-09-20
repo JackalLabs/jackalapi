@@ -40,7 +40,7 @@ func processUpload(w http.ResponseWriter, fileIo *file_io_handler.FileIoHandler,
 }
 
 func readUniquePath(req bunrouter.Request) string {
-	uniquePath, ok := req.Context().Value("uniquePath").(string)
+	uniquePath, ok := req.Context().Value(jutils.ReqUniquePath{}).(string)
 	if !ok {
 		return ""
 	}
