@@ -25,13 +25,13 @@ func NewScrapeQueue(fIQueue *FileIoQueue) *ScrapeQueue {
 }
 
 type scrapee struct {
-	fileIo     *file_io_handler.FileIoHandler
-	w          http.ResponseWriter
-	wg         *sync.WaitGroup
-	err        error
-	pathSelect string
-	filename   string
-	host       string
+	fileIo   *file_io_handler.FileIoHandler
+	w        http.ResponseWriter
+	wg       *sync.WaitGroup
+	err      error
+	destPath string
+	filename string
+	host     string
 }
 
 func (m *scrapee) Error() error {
@@ -62,14 +62,14 @@ func (q *ScrapeQueue) isEmpty() bool {
 	return len(q.scrapees) == 0
 }
 
-func (q *ScrapeQueue) Push(fileIo *file_io_handler.FileIoHandler, w http.ResponseWriter, wg *sync.WaitGroup, pathSelect string, filename string, host string) *scrapee {
+func (q *ScrapeQueue) Push(fileIo *file_io_handler.FileIoHandler, w http.ResponseWriter, wg *sync.WaitGroup, destPath string, filename string, host string) *scrapee {
 	m := scrapee{
-		fileIo:     fileIo,
-		w:          w,
-		wg:         wg,
-		pathSelect: pathSelect,
-		filename:   filename,
-		host:       host,
+		fileIo:   fileIo,
+		w:        w,
+		wg:       wg,
+		destPath: destPath,
+		filename: filename,
+		host:     host,
 	}
 
 	q.scrapees = append(q.scrapees, &m)
@@ -96,7 +96,7 @@ func (q *ScrapeQueue) listenOnce() {
 		return
 	}
 
-	fid := processUpload(w, scrapee.fileIo, byteBuffer.Bytes(), filename, scrapee.pathSelect, q.loadFIQueue())
+	fid := processUpload(w, scrapee.fileIo, byteBuffer.Bytes(), filename, scrapee.destPath, q.loadFIQueue())
 	if len(fid) == 0 {
 		warning := fmt.Sprintf("Failed to get FID for %s", filename)
 		scrapee.err = jutils.ProcessCustomHttpError("processUpload", warning, 500, w)

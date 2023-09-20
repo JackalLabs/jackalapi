@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/JackalLabs/jackalgo v0.0.3
-	github.com/rs/cors v1.9.0
+	github.com/rs/cors v1.10.0
 	github.com/uptrace/bunrouter v1.0.20
 )
 

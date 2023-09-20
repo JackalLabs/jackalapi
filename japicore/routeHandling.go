@@ -48,6 +48,8 @@ func VersionHandler() bunrouter.HandlerFunc {
 
 func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
+
 		var data fileScrape
 		source := req.Header.Get("J-Source-Path")
 
@@ -61,7 +63,7 @@ func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bu
 
 		for _, target := range data.Targets {
 			wg.Add(1)
-			queue.Push(fileIo, w, &wg, "bulk", target, source)
+			queue.Push(fileIo, w, &wg, operatingRoot, target, source)
 		}
 
 		wg.Wait()
@@ -163,6 +165,7 @@ func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bu
 		wg.Add(1)
 		WorkingFileSize := 32 << 30
 
+		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
 		envSize := jutils.LoadEnvVarOrFallback("JAPI_MAX_FILE", "")
 		if len(envSize) > 0 {
 			envParse, err := strconv.Atoi(envSize)
@@ -172,8 +175,6 @@ func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bu
 			WorkingFileSize = envParse
 		}
 		MaxFileSize := int64(WorkingFileSize)
-
-		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
 
 		// ParseMultipartForm parses a request body as multipart/form-data
 		err := req.ParseMultipartForm(MaxFileSize) // MAX file size lives here
