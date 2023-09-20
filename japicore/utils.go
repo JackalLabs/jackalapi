@@ -1,6 +1,7 @@
 package japicore
 
 import (
+	"github.com/uptrace/bunrouter"
 	"net/http"
 	"sync"
 
@@ -36,4 +37,15 @@ func processUpload(w http.ResponseWriter, fileIo *file_io_handler.FileIoHandler,
 	}
 
 	return m.Fid()
+}
+
+func readUniquePath(req bunrouter.Request) string {
+	uniquePath, ok := req.Context().Value("uniquePath").(string)
+	if !ok {
+		return ""
+	}
+	if len(uniquePath) == 0 {
+		return ""
+	}
+	return uniquePath
 }

@@ -160,6 +160,10 @@ func DownloadHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFun
 
 func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
+
+		uniquePath := readUniquePath(req)
+		_ = uniquePath
+
 		var byteBuffer bytes.Buffer
 		var wg sync.WaitGroup
 		wg.Add(1)
