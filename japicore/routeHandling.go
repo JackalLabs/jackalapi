@@ -158,8 +158,16 @@ func DownloadHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFun
 	}
 }
 
-func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
+func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue, generator PathGenerator) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
+
+		path, err := generator(&req)
+		if err != nil {
+			return err
+		}
+
+		_ = path // handle path in some way
+
 		var byteBuffer bytes.Buffer
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -177,7 +185,7 @@ func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bu
 		MaxFileSize := int64(WorkingFileSize)
 
 		// ParseMultipartForm parses a request body as multipart/form-data
-		err := req.ParseMultipartForm(MaxFileSize) // MAX file size lives here
+		err = req.ParseMultipartForm(MaxFileSize) // MAX file size lives here
 		if err != nil {
 			jutils.ProcessHttpError("ParseMultipartForm", err, 400, w)
 			return err

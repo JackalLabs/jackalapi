@@ -34,8 +34,15 @@ func main() {
 		group.GET("/ipfs/:id", japicore.IpfsHandler(fileIo, fileIoQueue))
 
 		group.POST("/import", japicore.ImportHandler(fileIo, scrapeQueue))
-		group.POST("/upload", japicore.UploadHandler(fileIo, fileIoQueue))
-		group.POST("/u", japicore.UploadHandler(fileIo, fileIoQueue))
+
+		// upload func gives an example of a path generator function
+		uploadFunc := japicore.UploadHandler(fileIo, fileIoQueue, func(req *bunrouter.Request) (string, error) {
+			fmt.Println(req.URL) // has access to the request
+			return "example path", nil
+		})
+		group.POST("/upload", uploadFunc)
+		group.POST("/u", uploadFunc)
+
 		group.DELETE("/del/:id", japicore.DeleteHandler(fileIo, fileIoQueue))
 	})
 

@@ -17,3 +17,5 @@ type UploadResponse struct {
 type fileScrape struct {
 	Targets []string `json:"targets"`
 }
+
+type PathGenerator func(req *bunrouter.Request) (string, error)
