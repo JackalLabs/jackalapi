@@ -57,22 +57,27 @@ func TestLoadEnvVarOrPanic(t *testing.T) {
 	t.Setenv("MOCK_ENV_VAR", "lupulella-2")
 
 	tt := []struct {
-		name  string
-		varId string
+		name        string
+		varId       string
+		shouldPanic bool
 	}{
 		{
-			name:  "env var exists",
-			varId: "MOCK_ENV_VAR",
+			name:        "env var exists",
+			varId:       "MOCK_ENV_VAR",
+			shouldPanic: false,
 		},
 		{
-			name:  "env var doesn't exist",
-			varId: "I_DONT_EXIST",
+			name:        "env var doesn't exist",
+			varId:       "I_DONT_EXIST",
+			shouldPanic: true,
 		},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			fmt.Println(tc.varId)
-			shouldPanic(t, func() { LoadEnvVarOrPanic(tc.varId) })
+			if tc.shouldPanic {
+				shouldPanic(t, func() { LoadEnvVarOrPanic(tc.varId) })
+			}
 		})
 	}
 }
@@ -101,7 +106,7 @@ func TestFriendlyTimestamp(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	r.IsType(now, reflect.TypeOf(""))
+	r.IsType(now, "")
 	r.IsType(parsedTime, time.Time{})
 }
 

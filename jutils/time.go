@@ -7,7 +7,7 @@ import (
 
 func FriendlyTimestamp() string {
 	currentTime := time.Now()
-	return fmt.Sprintf("%d-%d-%d %d:%d:%d",
+	return fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d",
 		currentTime.Year(),
 		currentTime.Month(),
 		currentTime.Day(),
