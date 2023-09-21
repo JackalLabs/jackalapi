@@ -20,6 +20,8 @@ func shouldPanic(t *testing.T, f func()) {
 
 // Env funcs
 func TestLoadEnvVarOrFallback(t *testing.T) {
+	r := require.New(t)
+
 	t.Setenv("MOCK_ENV_VAR", "lupulella-2")
 
 	tt := []struct {
@@ -43,9 +45,9 @@ func TestLoadEnvVarOrFallback(t *testing.T) {
 			fmt.Println(tc.varId)
 
 			if len(tc.fallBack) > 0 {
-				require.Equal(t, value, "fallback_var")
+				r.Equal(value, "fallback_var")
 			} else {
-				require.Equal(t, value, "lupulella-2")
+				r.Equal(value, "lupulella-2")
 			}
 		})
 	}
@@ -77,6 +79,8 @@ func TestLoadEnvVarOrPanic(t *testing.T) {
 
 // Data funcs
 func TestCloneBytes(t *testing.T) {
+	r := require.New(t)
+
 	byteBuffer := new(bytes.Buffer)
 	byteArray := byteBuffer.Bytes()
 
@@ -84,18 +88,21 @@ func TestCloneBytes(t *testing.T) {
 	byteArray2 := CloneBytes(byteReader)
 
 	matches := reflect.DeepEqual(byteArray, byteArray2)
-	require.Equal(t, matches, true)
+	r.Equal(matches, true)
 }
 
 // Date funcs
 func TestFriendlyTimestamp(t *testing.T) {
+	r := require.New(t)
+
 	now := FriendlyTimestamp()
-	parsedTime, err := time.Parse("2000-12-24 15:04:05", now)
+	const layout = "2006-01-02 15:04:05"
+	parsedTime, err := time.Parse(layout, now)
 	if err != nil {
 		t.Error(err)
 	}
-	require.IsType(t, now, reflect.TypeOf(""))
-	require.IsType(t, parsedTime, time.Time{})
+	r.IsType(now, reflect.TypeOf(""))
+	r.IsType(parsedTime, time.Time{})
 }
 
 // Error funcs
