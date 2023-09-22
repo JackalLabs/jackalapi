@@ -16,6 +16,11 @@ import (
 	"github.com/uptrace/bunrouter"
 )
 
+var (
+	Version = "v0.0.0"
+	Module  = "Jackal API Core"
+)
+
 func Handler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		return nil
@@ -24,24 +29,15 @@ func Handler() bunrouter.HandlerFunc {
 
 func MethodNotAllowedHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		w.WriteHeader(http.StatusMethodNotAllowed)
 		warning := fmt.Sprintf("%s method not availble for \"%s\"", req.URL.Path, req.Method)
-
-		_, err := w.Write([]byte(warning))
-		if err != nil {
-			jutils.ProcessError("WWriteError for MethodNotAllowedHandler", err)
-		}
-		return nil
+		return jutils.ProcessCustomHttpError("MethodNotAllowedHandler", warning, 405, w)
 	}
 }
 
 func VersionHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		version := "v0.1.0"
-		_, err := w.Write([]byte(version))
-		if err != nil {
-			jutils.ProcessError("WWriteError for VersionHandler", err)
-		}
+		message := createJsonResponse("")
+		condensedWriteJSON(w, message)
 		return nil
 	}
 }
@@ -68,10 +64,8 @@ func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bu
 
 		wg.Wait()
 
-		_, err = w.Write([]byte("Import complete"))
-		if err != nil {
-			jutils.ProcessError("WWriteError for ImportHandler", err)
-		}
+		message := createJsonResponse("Import complete")
+		condensedWriteJSON(w, message)
 		return nil
 	}
 }
@@ -211,10 +205,8 @@ func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bu
 			return err
 		}
 
-		_, err = w.Write([]byte("uploadHandler"))
-		if err != nil {
-			jutils.ProcessError("WWriteError for UploadHandler", err)
-		}
+		message := createJsonResponse("Upload complete")
+		condensedWriteJSON(w, message)
 		return nil
 	}
 }
@@ -242,6 +234,8 @@ func DeleteHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bu
 			return err
 		}
 
+		message := createJsonResponse("Deletion complete")
+		condensedWriteJSON(w, message)
 		return nil
 	}
 }
