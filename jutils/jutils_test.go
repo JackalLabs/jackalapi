@@ -44,7 +44,8 @@ var (
 // Env funcs
 func TestLoadEnvVarOrFallback(t *testing.T) {
 	r := require.New(t)
-	t.Setenv("MOCK_ENV_VAR", "lupulella-2")
+	mockEnvValue := "lupulella-2"
+	t.Setenv("MOCK_ENV_VAR", mockEnvValue)
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
@@ -52,22 +53,26 @@ func TestLoadEnvVarOrFallback(t *testing.T) {
 			fmt.Println(tc.varId)
 
 			if len(tc.fallBack) > 0 {
-				r.Equal(value, "fallback_var")
+				r.Equal(value, tc.fallBack)
 			} else {
-				r.Equal(value, "lupulella-2")
+				r.Equal(value, mockEnvValue)
 			}
 		})
 	}
 }
 
 func TestLoadEnvVarOrPanic(t *testing.T) {
-	t.Setenv("MOCK_ENV_VAR", "lupulella-2")
+	r := require.New(t)
+	mockEnvValue := "lupulella-2"
+	t.Setenv("MOCK_ENV_VAR", mockEnvValue)
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			fmt.Println(tc.varId)
 			if tc.shouldPanic {
 				shouldPanic(t, func() { LoadEnvVarOrPanic(tc.varId) })
+			} else {
+				r.Equal(LoadEnvVarOrPanic(tc.varId), mockEnvValue)
 			}
 		})
 	}
