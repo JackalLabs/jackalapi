@@ -98,19 +98,22 @@ func DeleteByFidHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueu
 		fid := strings.ReplaceAll(id, "/", "_")
 		fmt.Println(fid)
 
-		folder, err := fileIo.DownloadFolder(queue.GetRoot("bulk"))
-		if err != nil {
-			jutils.ProcessHttpError("DeleteFile", err, 404, w)
-			return err
-		}
+		// TODO - update after deletion by fid is added to jackalgo
 
-		err = fileIo.DeleteTargets([]string{fid}, folder)
-		if err != nil {
-			jutils.ProcessHttpError("DeleteFile", err, 500, w)
-			return err
-		}
+		//folder, err := fileIo.DownloadFolder(queue.GetRoot("bulk"))
+		//if err != nil {
+		//	jutils.ProcessHttpError("DeleteFile", err, 404, w)
+		//	return err
+		//}
+		//
+		//err = fileIo.DeleteTargets([]string{fid}, folder)
+		//if err != nil {
+		//	jutils.ProcessHttpError("DeleteFile", err, 500, w)
+		//	return err
+		//}
 
-		message := createJsonResponse("Deletion complete")
+		//message := createJsonResponse("Deletion complete")
+		message := createJsonResponse("Deletion Not Implemented")
 		condensedWriteJSON(w, message)
 		return nil
 	}
