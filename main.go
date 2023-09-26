@@ -21,6 +21,7 @@ func main() {
 
 	router := bunrouter.New(
 		bunrouter.WithMethodNotAllowedHandler(japicore.MethodNotAllowedHandler()),
+		bunrouter.WithNotFoundHandler(japicore.RouteNotFoundHandler()),
 	)
 	group := router.NewGroup("")
 
