@@ -43,13 +43,15 @@ func main() {
 	})
 
 	group.WithGroup("/p", func(group *bunrouter.Group) {
-		group.GET("/download/:id", japicore.DownloadByPathHandler(fileIo))
-		group.GET("/d/:id", japicore.DownloadByPathHandler(fileIo))
+		group.GET("/downloadfrombulk/*location", japicore.DownloadFromBulkByPathHandler(fileIo))
+		group.GET("/download/*location", japicore.DownloadByPathHandler(fileIo))
+		group.GET("/d/*location", japicore.DownloadByPathHandler(fileIo))
 
 		group.POST("/import", japicore.ImportHandler(fileIo, scrapeQueue))
 		group.POST("/upload", japicore.UploadByPathHandler(fileIo, fileIoQueue))
 		group.POST("/u", japicore.UploadByPathHandler(fileIo, fileIoQueue))
-		group.DELETE("/del/:id", japicore.DeleteByPathHandler(fileIo, fileIoQueue))
+		group.DELETE("/delfrombulk/:filename/*location", japicore.DeleteFromBulkByPathHandler(fileIo))
+		group.DELETE("/del/:filename/*location", japicore.DeleteByPathHandler(fileIo))
 	})
 
 	port := jutils.LoadEnvVarOrFallback("JAPI_PORT", "3535")

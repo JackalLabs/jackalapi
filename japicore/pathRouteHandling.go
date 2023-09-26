@@ -15,12 +15,87 @@ import (
 	"github.com/uptrace/bunrouter"
 )
 
+func downloadByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot string) bunrouter.HandlerFunc {
+	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		location := req.Param("location")
+		if len(location) == 0 {
+			warning := "Failed to get Location"
+			return jutils.ProcessCustomHttpError("DownloadByPathHandler", warning, 404, w)
+		}
+
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+		operatingRoot += "/" + location
+
+		handler, err := fileIo.DownloadFile(operatingRoot)
+		if err != nil {
+			return err
+		}
+
+		fileBytes := handler.GetFile().Buffer().Bytes()
+		_, err = w.Write(fileBytes)
+		if err != nil {
+			jutils.ProcessError("WWriteError for DownloadByPathHandler", err)
+		}
+		return nil
+	}
+}
+
+func deleteByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot string) bunrouter.HandlerFunc {
+	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		filename := req.Param("filename")
+		if len(filename) == 0 {
+			warning := "Failed to get FileName"
+			return jutils.ProcessCustomHttpError("processUpload", warning, 400, w)
+		}
+
+		location := req.Param("location")
+		if len(location) == 0 {
+			warning := "Failed to get Location"
+			return jutils.ProcessCustomHttpError("DownloadByPathHandler", warning, 404, w)
+		}
+
+		cleanFilename := strings.ReplaceAll(filename, "/", "_")
+		fmt.Println(cleanFilename)
+
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+		operatingRoot += "/" + location
+
+		folder, err := fileIo.DownloadFolder(operatingRoot)
+		if err != nil {
+			jutils.ProcessHttpError("DeleteFile", err, 404, w)
+			return err
+		}
+
+		err = fileIo.DeleteTargets([]string{cleanFilename}, folder)
+		if err != nil {
+			jutils.ProcessHttpError("DeleteFile", err, 500, w)
+			return err
+		}
+
+		message := createJsonResponse("Deletion complete")
+		condensedWriteJSON(w, message)
+		return nil
+	}
+}
+
 func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
 
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+
 		var data fileScrape
 		source := req.Header.Get("J-Source-Path")
+		operatingRoot += "/" + source
 
 		err := json.NewDecoder(req.Body).Decode(&data)
 		if err != nil {
@@ -43,27 +118,14 @@ func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bu
 	}
 }
 
+func DownloadFromBulkByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
+	return downloadByPathCore(fileIo, operatingRoot)
+}
+
 func DownloadByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
-	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		id := req.Param("id")
-		if len(id) == 0 {
-			warning := "Failed to get FileName"
-			return jutils.ProcessCustomHttpError("processUpload", warning, 404, w)
-		}
-		fid := strings.ReplaceAll(id, "/", "_")
-
-		handler, err := fileIo.DownloadFileFromFid(fid)
-		if err != nil {
-			return err
-		}
-
-		fileBytes := handler.GetFile().Buffer().Bytes()
-		_, err = w.Write(fileBytes)
-		if err != nil {
-			jutils.ProcessError("WWriteError for DownloadByFidHandler", err)
-		}
-		return nil
-	}
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	return downloadByPathCore(fileIo, operatingRoot)
 }
 
 func UploadByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
@@ -135,31 +197,12 @@ func UploadByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQue
 	}
 }
 
-func DeleteByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
-	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		id := req.Param("id")
-		if len(id) == 0 {
-			warning := "Failed to get FileName"
-			return jutils.ProcessCustomHttpError("processUpload", warning, 400, w)
-		}
+func DeleteFromBulkByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
+	return deleteByPathCore(fileIo, operatingRoot)
+}
 
-		fid := strings.ReplaceAll(id, "/", "_")
-		fmt.Println(fid)
-
-		folder, err := fileIo.DownloadFolder(queue.GetRoot("bulk"))
-		if err != nil {
-			jutils.ProcessHttpError("DeleteFile", err, 404, w)
-			return err
-		}
-
-		err = fileIo.DeleteTargets([]string{fid}, folder)
-		if err != nil {
-			jutils.ProcessHttpError("DeleteFile", err, 500, w)
-			return err
-		}
-
-		message := createJsonResponse("Deletion complete")
-		condensedWriteJSON(w, message)
-		return nil
-	}
+func DeleteByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	return deleteByPathCore(fileIo, operatingRoot)
 }
