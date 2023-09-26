@@ -158,23 +158,13 @@ func DownloadHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFun
 	}
 }
 
-func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue, subfolder string) bunrouter.HandlerFunc {
+func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
 		var byteBuffer bytes.Buffer
 		var wg sync.WaitGroup
 		wg.Add(1)
 		WorkingFileSize := 32 << 30
-
-		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
-
-		uniquePath := readUniquePath(req)
-		if len(uniquePath) > 0 {
-			operatingRoot += "/" + uniquePath
-		}
-
-		if len(subfolder) > 0 {
-			operatingRoot += "/" + subfolder
-		}
 
 		envSize := jutils.LoadEnvVarOrFallback("JAPI_MAX_FILE", "")
 		if len(envSize) > 0 {
@@ -198,6 +188,16 @@ func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue, su
 		if err != nil {
 			jutils.ProcessHttpError("FormFileFile", err, 400, w)
 			return err
+		}
+
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+
+		subFolder := req.FormValue("subfolder")
+		if len(subFolder) > 0 {
+			operatingRoot += "/" + subFolder
 		}
 
 		_, err = io.Copy(&byteBuffer, file)
