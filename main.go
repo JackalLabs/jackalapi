@@ -29,14 +29,26 @@ func main() {
 
 	group.WithGroup("", func(group *bunrouter.Group) {
 		group.GET("/version", japicore.VersionHandler())
-		group.GET("/download/:id", japicore.DownloadHandler(fileIo))
-		group.GET("/d/:id", japicore.DownloadHandler(fileIo))
+	})
+
+	group.WithGroup("/fid", func(group *bunrouter.Group) {
+		group.GET("/download/:id", japicore.DownloadByFidHandler(fileIo))
+		group.GET("/d/:id", japicore.DownloadByFidHandler(fileIo))
 		group.GET("/ipfs/:id", japicore.IpfsHandler(fileIo, fileIoQueue))
 
+		group.POST("/upload", japicore.UploadByPathHandler(fileIo, fileIoQueue))
+		group.POST("/u", japicore.UploadByPathHandler(fileIo, fileIoQueue))
+		group.DELETE("/del/:id", japicore.DeleteByFidHandler(fileIo, fileIoQueue))
+	})
+
+	group.WithGroup("/p", func(group *bunrouter.Group) {
+		group.GET("/download/:id", japicore.DownloadByPathHandler(fileIo))
+		group.GET("/d/:id", japicore.DownloadByPathHandler(fileIo))
+
 		group.POST("/import", japicore.ImportHandler(fileIo, scrapeQueue))
-		group.POST("/upload", japicore.UploadHandler(fileIo, fileIoQueue))
-		group.POST("/u", japicore.UploadHandler(fileIo, fileIoQueue))
-		group.DELETE("/del/:id", japicore.DeleteHandler(fileIo, fileIoQueue))
+		group.POST("/upload", japicore.UploadByPathHandler(fileIo, fileIoQueue))
+		group.POST("/u", japicore.UploadByPathHandler(fileIo, fileIoQueue))
+		group.DELETE("/del/:id", japicore.DeleteByPathHandler(fileIo, fileIoQueue))
 	})
 
 	port := jutils.LoadEnvVarOrFallback("JAPI_PORT", "3535")

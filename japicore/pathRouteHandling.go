@@ -3,7 +3,6 @@ package japicore
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,32 +14,6 @@ import (
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
 	"github.com/uptrace/bunrouter"
 )
-
-var (
-	Version = "v0.0.0"
-	Module  = "Jackal API Core"
-)
-
-func Handler() bunrouter.HandlerFunc {
-	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		return nil
-	}
-}
-
-func MethodNotAllowedHandler() bunrouter.HandlerFunc {
-	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		warning := fmt.Sprintf("%s method not availble for \"%s\"", req.URL.Path, req.Method)
-		return jutils.ProcessCustomHttpError("MethodNotAllowedHandler", warning, 405, w)
-	}
-}
-
-func VersionHandler() bunrouter.HandlerFunc {
-	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		message := createJsonResponse("")
-		condensedWriteJSON(w, message)
-		return nil
-	}
-}
 
 func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
@@ -70,66 +43,7 @@ func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bu
 	}
 }
 
-func IpfsHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
-	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		var allBytes []byte
-
-		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_IPFS_ROOT", "s/JAPI/IPFS")
-		gateway := jutils.LoadEnvVarOrFallback("JAPI_IPFS_GATEWAY", "https://ipfs.io/ipfs/")
-		toClone := false
-		cloneHeader := req.Header.Get("J-Clone-Ipfs")
-		if strings.ToLower(cloneHeader) == "true" {
-			toClone = true
-		}
-
-		id := req.Param("id")
-		if len(id) == 0 {
-			warning := "Failed to get IPFS CID"
-			return jutils.ProcessCustomHttpError("processUpload", warning, 500, w)
-		}
-
-		cid := strings.ReplaceAll(id, "/", "_")
-
-		handler, err := fileIo.DownloadFile(fmt.Sprintf("%s/%s", operatingRoot, cid))
-		if err != nil {
-			if !toClone {
-				warning := "IPFS CID Not Found"
-				w.WriteHeader(404)
-				_, err := w.Write([]byte(warning))
-				if err != nil {
-					return err
-				}
-				return errors.New(strings.ToLower(warning))
-			}
-
-			byteBuffer, err := httpGetFileRequest(w, gateway, cid)
-			if err != nil {
-				jutils.ProcessHttpError("httpGetFileRequest", err, 404, w)
-				return err
-			}
-
-			byteReader := bytes.NewReader(byteBuffer.Bytes())
-			workingBytes := jutils.CloneBytes(byteReader)
-			allBytes = jutils.CloneBytes(byteReader)
-
-			fid := processUpload(w, fileIo, workingBytes, cid, operatingRoot, queue)
-			if len(fid) == 0 {
-				warning := "Failed to get FID post-upload"
-				return jutils.ProcessCustomHttpError("IpfsHandler", warning, 500, w)
-			}
-		} else {
-			allBytes = handler.GetFile().Buffer().Bytes()
-		}
-		_, err = w.Write(allBytes)
-		if err != nil {
-			jutils.ProcessError("WWriteError for IpfsHandler", err)
-			return err
-		}
-		return nil
-	}
-}
-
-func DownloadHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
+func DownloadByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		id := req.Param("id")
 		if len(id) == 0 {
@@ -146,13 +60,13 @@ func DownloadHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFun
 		fileBytes := handler.GetFile().Buffer().Bytes()
 		_, err = w.Write(fileBytes)
 		if err != nil {
-			jutils.ProcessError("WWriteError for DownloadHandler", err)
+			jutils.ProcessError("WWriteError for DownloadByFidHandler", err)
 		}
 		return nil
 	}
 }
 
-func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
+func UploadByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
 		var byteBuffer bytes.Buffer
@@ -221,7 +135,7 @@ func UploadHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bu
 	}
 }
 
-func DeleteHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
+func DeleteByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		id := req.Param("id")
 		if len(id) == 0 {
