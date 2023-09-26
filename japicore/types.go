@@ -17,3 +17,17 @@ type UploadResponse struct {
 type fileScrape struct {
 	Targets []string `json:"targets"`
 }
+
+type jsonResponse struct {
+	Module  string `json:"module"`
+	Version string `json:"version"`
+	Message string `json:"message"`
+}
+
+func createJsonResponse(message string) jsonResponse {
+	return jsonResponse{
+		Message: message,
+		Module:  Module,
+		Version: Version,
+	}
+}

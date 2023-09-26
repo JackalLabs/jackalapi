@@ -1,6 +1,9 @@
 package japicore
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/uptrace/bunrouter"
 	"net/http"
 	"sync"
@@ -37,6 +40,21 @@ func processUpload(w http.ResponseWriter, fileIo *file_io_handler.FileIoHandler,
 	}
 
 	return m.Fid()
+}
+
+func condensedWriteJSON(w http.ResponseWriter, respVal interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(respVal); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		fmt.Printf("json.NewEncoder.Encode: %v", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	written, err := w.Write(buf.Bytes())
+	if err != nil {
+		fmt.Printf("Written bytes: %d\n", written)
+		fmt.Println(err)
+	}
 }
 
 func readUniquePath(req bunrouter.Request) string {
