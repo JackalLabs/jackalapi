@@ -69,7 +69,7 @@ func DownloadByFidHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.Handl
 		id := req.Param("id")
 		if len(id) == 0 {
 			warning := "Failed to get FileName"
-			return jutils.ProcessCustomHttpError("processUpload", warning, 404, w)
+			return jutils.ProcessCustomHttpError("DownloadByFidHandler", warning, 404, w)
 		}
 		fid := strings.ReplaceAll(id, "/", "_")
 
