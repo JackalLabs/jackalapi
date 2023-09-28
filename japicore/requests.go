@@ -2,7 +2,6 @@ package japicore
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -22,7 +21,7 @@ func httpGetFileRequest(w http.ResponseWriter, host string, path string) (bytes.
 	}
 
 	url = url.JoinPath(path)
-	fmt.Println(url.String())
+	// fmt.Println(url.String())
 
 	innerReq, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
