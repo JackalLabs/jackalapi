@@ -25,21 +25,19 @@ type testCase struct {
 	shouldPanic bool
 }
 
-var (
-	tt = []testCase{
-		{
-			name:        "env var exists",
-			varId:       "MOCK_ENV_VAR",
-			shouldPanic: false,
-		},
-		{
-			name:        "env var doesn't exist",
-			varId:       "I_DONT_EXIST",
-			fallBack:    "fallback_var",
-			shouldPanic: true,
-		},
-	}
-)
+var tt = []testCase{
+	{
+		name:        "env var exists",
+		varId:       "MOCK_ENV_VAR",
+		shouldPanic: false,
+	},
+	{
+		name:        "env var doesn't exist",
+		varId:       "I_DONT_EXIST",
+		fallBack:    "fallback_var",
+		shouldPanic: true,
+	},
+}
 
 // Env funcs
 func TestLoadEnvVarOrFallback(t *testing.T) {

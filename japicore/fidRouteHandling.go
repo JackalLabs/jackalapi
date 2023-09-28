@@ -3,11 +3,12 @@ package japicore
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
 	"github.com/uptrace/bunrouter"
-	"net/http"
-	"strings"
 )
 
 func IpfsHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
@@ -112,7 +113,7 @@ func DeleteByFidHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueu
 		//	return err
 		//}
 
-		//message := createJsonResponse("Deletion complete")
+		// message := createJsonResponse("Deletion complete")
 		message := createJsonResponse("Deletion Not Implemented")
 		condensedWriteJSON(w, message)
 		return nil

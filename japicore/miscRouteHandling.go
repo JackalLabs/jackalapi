@@ -2,9 +2,10 @@ package japicore
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/uptrace/bunrouter"
-	"net/http"
 )
 
 var (
