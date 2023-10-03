@@ -90,6 +90,23 @@ func TestCloneBytes(t *testing.T) {
 	r.Equal(matches, true)
 }
 
+func TestCloneByteSlice(t *testing.T) {
+	r := require.New(t)
+
+	byteBuffer := new(bytes.Buffer)
+	byteArray := byteBuffer.Bytes()
+
+	cloneArray1, cloneArray2, err := CloneByteSlice(byteArray)
+	if err != nil {
+		ProcessError("TestCloneByteSlice", err)
+	}
+
+	matches := reflect.DeepEqual(byteArray, cloneArray1)
+	r.Equal(matches, true)
+	matches = reflect.DeepEqual(byteArray, cloneArray2)
+	r.Equal(matches, true)
+}
+
 // Date funcs
 func TestFriendlyTimestamp(t *testing.T) {
 	r := require.New(t)
@@ -104,8 +121,16 @@ func TestFriendlyTimestamp(t *testing.T) {
 	r.IsType(parsedTime, time.Time{})
 }
 
+func TestUnixMsTimestamp(t *testing.T) {
+	// TODO - add test
+}
+
 // Error funcs
 func TestProcessError(t *testing.T) {
+	// TODO - add test
+}
+
+func TestProcessCustomError(t *testing.T) {
 	// TODO - add test
 }
 
