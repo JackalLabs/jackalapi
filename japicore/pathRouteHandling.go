@@ -11,16 +11,15 @@ import (
 	"sync"
 
 	"github.com/JackalLabs/jackalapi/jutils"
-	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
 	"github.com/uptrace/bunrouter"
 )
 
-func downloadByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot string) bunrouter.HandlerFunc {
+func (j JApiCore) downloadByPathCore(operatingRoot string, reportFunc func(num int64)) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		location := req.Param("location")
 		if len(location) == 0 {
 			warning := "Failed to get Location"
-			return jutils.ProcessCustomHttpError("DownloadByPathHandler", warning, 404, w)
+			return jutils.ProcessCustomHttpError("BasicDownloadByPathHandler", warning, 404, w)
 		}
 
 		uniquePath := readUniquePath(req)
@@ -29,21 +28,24 @@ func downloadByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot str
 		}
 		operatingRoot += "/" + location
 
-		handler, err := fileIo.DownloadFile(operatingRoot)
+		handler, err := j.FileIo.DownloadFile(operatingRoot)
 		if err != nil {
 			return err
 		}
 
+		size := handler.GetFile().Details.Size
+		reportFunc(size)
+
 		fileBytes := handler.GetFile().Buffer().Bytes()
 		_, err = w.Write(fileBytes)
 		if err != nil {
-			jutils.ProcessError("WWriteError for DownloadByPathHandler", err)
+			jutils.ProcessError("WWriteError for BasicDownloadByPathHandler", err)
 		}
 		return nil
 	}
 }
 
-func deleteByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot string) bunrouter.HandlerFunc {
+func (j JApiCore) deleteByPathCore(operatingRoot string, delFunc func(num int64)) bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		filename := req.Param("filename")
 		if len(filename) == 0 {
@@ -54,7 +56,7 @@ func deleteByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot strin
 		location := req.Param("location")
 		if len(location) == 0 {
 			warning := "Failed to get Location"
-			return jutils.ProcessCustomHttpError("DownloadByPathHandler", warning, 404, w)
+			return jutils.ProcessCustomHttpError("BasicDownloadByPathHandler", warning, 404, w)
 		}
 
 		cleanFilename := strings.ReplaceAll(filename, "/", "_")
@@ -66,13 +68,16 @@ func deleteByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot strin
 		}
 		operatingRoot += "/" + location
 
-		folder, err := fileIo.DownloadFolder(operatingRoot)
+		folder, err := j.FileIo.DownloadFolder(operatingRoot)
 		if err != nil {
 			jutils.ProcessHttpError("DeleteFile", err, 404, w)
 			return err
 		}
 
-		err = fileIo.DeleteTargets([]string{cleanFilename}, folder)
+		deletionSize := folder.GetChildFiles()[cleanFilename].Size
+		delFunc(deletionSize)
+
+		err = j.FileIo.DeleteTargets([]string{cleanFilename}, folder)
 		if err != nil {
 			jutils.ProcessHttpError("DeleteFile", err, 500, w)
 			return err
@@ -84,7 +89,7 @@ func deleteByPathCore(fileIo *file_io_handler.FileIoHandler, operatingRoot strin
 	}
 }
 
-func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bunrouter.HandlerFunc {
+func (j JApiCore) ImportHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
 
@@ -107,7 +112,7 @@ func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bu
 
 		for _, target := range data.Targets {
 			wg.Add(1)
-			queue.Push(fileIo, w, &wg, operatingRoot, target, source)
+			j.ScrapeQueue.Push(j.FileIo, w, &wg, operatingRoot, target, source)
 		}
 
 		wg.Wait()
@@ -118,17 +123,7 @@ func ImportHandler(fileIo *file_io_handler.FileIoHandler, queue *ScrapeQueue) bu
 	}
 }
 
-func DownloadFromBulkByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
-	return downloadByPathCore(fileIo, operatingRoot)
-}
-
-func DownloadByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
-	return downloadByPathCore(fileIo, operatingRoot)
-}
-
-func UploadByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQueue) bunrouter.HandlerFunc {
+func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
 		var byteBuffer bytes.Buffer
@@ -176,7 +171,7 @@ func UploadByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQue
 			return err
 		}
 
-		fid := processUpload(w, fileIo, byteBuffer.Bytes(), head.Filename, operatingRoot, queue)
+		fid := processUpload(w, j.FileIo, byteBuffer.Bytes(), head.Filename, operatingRoot, j.FileIoQueue)
 		if len(fid) == 0 {
 			warning := "Failed to get FID"
 			return jutils.ProcessCustomHttpError("processUpload", warning, 500, w)
@@ -197,12 +192,42 @@ func UploadByPathHandler(fileIo *file_io_handler.FileIoHandler, queue *FileIoQue
 	}
 }
 
-func DeleteFromBulkByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
+func (j JApiCore) BasicDownloadFromBulkByPathHandler() bunrouter.HandlerFunc {
 	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
-	return deleteByPathCore(fileIo, operatingRoot)
+	return j.downloadByPathCore(operatingRoot, func(num int64) {})
 }
 
-func DeleteByPathHandler(fileIo *file_io_handler.FileIoHandler) bunrouter.HandlerFunc {
+func (j JApiCore) BasicDownloadByPathHandler() bunrouter.HandlerFunc {
 	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
-	return deleteByPathCore(fileIo, operatingRoot)
+	return j.downloadByPathCore(operatingRoot, func(num int64) {})
+}
+
+func (j JApiCore) BasicDeleteFromBulkByPathHandler() bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
+	return j.deleteByPathCore(operatingRoot, func(num int64) {})
+}
+
+func (j JApiCore) BasicDeleteByPathHandler() bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	return j.deleteByPathCore(operatingRoot, func(num int64) {})
+}
+
+func (j JApiCore) AdvancedDownloadFromBulkByPathHandler(reportFunc func(num int64)) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
+	return j.downloadByPathCore(operatingRoot, reportFunc)
+}
+
+func (j JApiCore) AdvancedDownloadByPathHandler(reportFunc func(num int64)) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	return j.downloadByPathCore(operatingRoot, reportFunc)
+}
+
+func (j JApiCore) AdvancedDeleteFromBulkByPathHandler(delFunc func(num int64)) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_BULK_ROOT", "s/JAPI/Bulk")
+	return j.deleteByPathCore(operatingRoot, delFunc)
+}
+
+func (j JApiCore) AdvancedDeleteByPathHandler(delFunc func(num int64)) bunrouter.HandlerFunc {
+	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	return j.deleteByPathCore(operatingRoot, delFunc)
 }
