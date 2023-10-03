@@ -14,6 +14,12 @@ func ProcessError(block string, caughtError error) {
 	fmt.Println("***** End Error Report *****")
 }
 
+func ProcessCustomError(block string, customError string) error {
+	asError := errors.New(strings.ToLower(customError))
+	ProcessError(block, asError)
+	return asError
+}
+
 func ProcessHttpError(block string, caughtError error, eCode int, w http.ResponseWriter) {
 	ProcessError(block, caughtError)
 	http.Error(w, caughtError.Error(), eCode)
