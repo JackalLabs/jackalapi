@@ -12,7 +12,7 @@ seed-phrase of the API.
 ```shell
 git clone https://github.com/JackalLabs/jackalapi.git
 cd jackalapi
-git checkout v0.1.0
+git checkout v0.2.0
 go make install
 ```
 

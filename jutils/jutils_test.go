@@ -18,65 +18,59 @@ func shouldPanic(t *testing.T, f func()) {
 	t.Errorf("did not panic")
 }
 
+type testCase struct {
+	name        string
+	varId       string
+	fallBack    string
+	shouldPanic bool
+}
+
+var tt = []testCase{
+	{
+		name:        "env var exists",
+		varId:       "MOCK_ENV_VAR",
+		shouldPanic: false,
+	},
+	{
+		name:        "env var doesn't exist",
+		varId:       "I_DONT_EXIST",
+		fallBack:    "fallback_var",
+		shouldPanic: true,
+	},
+}
+
 // Env funcs
 func TestLoadEnvVarOrFallback(t *testing.T) {
 	r := require.New(t)
+	mockEnvValue := "lupulella-2"
+	t.Setenv("MOCK_ENV_VAR", mockEnvValue)
 
-	t.Setenv("MOCK_ENV_VAR", "lupulella-2")
-
-	tt := []struct {
-		name     string
-		varId    string
-		fallBack string
-	}{
-		{
-			name:  "env var exists",
-			varId: "MOCK_ENV_VAR",
-		},
-		{
-			name:     "env var doesn't exist",
-			varId:    "I_DONT_EXIST",
-			fallBack: "fallback_var",
-		},
-	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			value := LoadEnvVarOrFallback(tc.varId, tc.fallBack)
 			fmt.Println(tc.varId)
 
 			if len(tc.fallBack) > 0 {
-				r.Equal(value, "fallback_var")
+				r.Equal(value, tc.fallBack)
 			} else {
-				r.Equal(value, "lupulella-2")
+				r.Equal(value, mockEnvValue)
 			}
 		})
 	}
 }
 
 func TestLoadEnvVarOrPanic(t *testing.T) {
-	t.Setenv("MOCK_ENV_VAR", "lupulella-2")
+	r := require.New(t)
+	mockEnvValue := "lupulella-2"
+	t.Setenv("MOCK_ENV_VAR", mockEnvValue)
 
-	tt := []struct {
-		name        string
-		varId       string
-		shouldPanic bool
-	}{
-		{
-			name:        "env var exists",
-			varId:       "MOCK_ENV_VAR",
-			shouldPanic: false,
-		},
-		{
-			name:        "env var doesn't exist",
-			varId:       "I_DONT_EXIST",
-			shouldPanic: true,
-		},
-	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			fmt.Println(tc.varId)
 			if tc.shouldPanic {
 				shouldPanic(t, func() { LoadEnvVarOrPanic(tc.varId) })
+			} else {
+				r.Equal(LoadEnvVarOrPanic(tc.varId), mockEnvValue)
 			}
 		})
 	}
@@ -96,6 +90,23 @@ func TestCloneBytes(t *testing.T) {
 	r.Equal(matches, true)
 }
 
+func TestCloneByteSlice(t *testing.T) {
+	r := require.New(t)
+
+	byteBuffer := new(bytes.Buffer)
+	byteArray := byteBuffer.Bytes()
+
+	cloneArray1, cloneArray2, err := CloneByteSlice(byteArray)
+	if err != nil {
+		ProcessError("TestCloneByteSlice", err)
+	}
+
+	matches := reflect.DeepEqual(byteArray, cloneArray1)
+	r.Equal(matches, true)
+	matches = reflect.DeepEqual(byteArray, cloneArray2)
+	r.Equal(matches, true)
+}
+
 // Date funcs
 func TestFriendlyTimestamp(t *testing.T) {
 	r := require.New(t)
@@ -110,8 +121,16 @@ func TestFriendlyTimestamp(t *testing.T) {
 	r.IsType(parsedTime, time.Time{})
 }
 
+func TestUnixMsTimestamp(t *testing.T) {
+	// TODO - add test
+}
+
 // Error funcs
 func TestProcessError(t *testing.T) {
+	// TODO - add test
+}
+
+func TestProcessCustomError(t *testing.T) {
 	// TODO - add test
 }
 

@@ -15,3 +15,8 @@ func FriendlyTimestamp() string {
 		currentTime.Minute(),
 		currentTime.Second())
 }
+
+func UnixMsTimestamp() int64 {
+	currentTime := time.Now()
+	return currentTime.UnixMilli()
+}

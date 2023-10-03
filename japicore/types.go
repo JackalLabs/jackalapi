@@ -3,6 +3,8 @@ package japicore
 import (
 	"net/http"
 
+	"github.com/JackalLabs/jackalgo/handlers/wallet_handler"
+
 	"github.com/uptrace/bunrouter"
 
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
@@ -16,4 +18,40 @@ type UploadResponse struct {
 
 type fileScrape struct {
 	Targets []string `json:"targets"`
+}
+
+type jsonResponse struct {
+	Module  string `json:"module"`
+	Version string `json:"version"`
+	Message string `json:"message"`
+}
+
+func createJsonResponse(message string) jsonResponse {
+	return jsonResponse{
+		Message: message,
+		Module:  Module,
+		Version: Version,
+	}
+}
+
+type JApiCore struct {
+	FileIo      *file_io_handler.FileIoHandler
+	FileIoQueue *FileIoQueue
+	ScrapeQueue *ScrapeQueue
+	Wallet      *wallet_handler.WalletHandler
+}
+
+func InitJApiCore() *JApiCore {
+	wallet, fileIo := InitWalletSession()
+	fileIoQueue := NewFileIoQueue()
+	scrapeQueue := NewScrapeQueue(fileIoQueue)
+
+	core := JApiCore{
+		FileIo:      fileIo,
+		FileIoQueue: fileIoQueue,
+		ScrapeQueue: scrapeQueue,
+		Wallet:      wallet,
+	}
+
+	return &core
 }

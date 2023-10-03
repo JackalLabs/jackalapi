@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/uptrace/bunrouter"
+
 	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
 	"github.com/JackalLabs/jackalgo/handlers/file_upload_handler"
@@ -36,4 +38,15 @@ func processUpload(w http.ResponseWriter, fileIo *file_io_handler.FileIoHandler,
 	}
 
 	return m.Fid()
+}
+
+func readUniquePath(req bunrouter.Request) string {
+	uniquePath, ok := req.Context().Value(jutils.ReqUniquePath{}).(string)
+	if !ok {
+		return ""
+	}
+	if len(uniquePath) == 0 {
+		return ""
+	}
+	return uniquePath
 }

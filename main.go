@@ -14,13 +14,11 @@ import (
 )
 
 func main() {
-	_, fileIo := japicore.InitWalletSession()
-	fileIoQueue := japicore.NewFileIoQueue()
-
-	scrapeQueue := japicore.NewScrapeQueue(fileIoQueue)
+	coreSession := japicore.InitJApiCore()
 
 	router := bunrouter.New(
-		bunrouter.WithMethodNotAllowedHandler(japicore.MethodNotAllowedHandler()),
+		bunrouter.WithMethodNotAllowedHandler(coreSession.MethodNotAllowedHandler()),
+		bunrouter.WithNotFoundHandler(coreSession.RouteNotFoundHandler()),
 	)
 	group := router.NewGroup("")
 
@@ -28,15 +26,29 @@ func main() {
 	handler = cors.Default().Handler(handler)
 
 	group.WithGroup("", func(group *bunrouter.Group) {
-		group.GET("/version", japicore.VersionHandler())
-		group.GET("/download/:id", japicore.DownloadHandler(fileIo))
-		group.GET("/d/:id", japicore.DownloadHandler(fileIo))
-		group.GET("/ipfs/:id", japicore.IpfsHandler(fileIo, fileIoQueue))
+		group.GET("/version", coreSession.VersionHandler())
+	})
 
-		group.POST("/import", japicore.ImportHandler(fileIo, scrapeQueue))
-		group.POST("/upload", japicore.UploadHandler(fileIo, fileIoQueue))
-		group.POST("/u", japicore.UploadHandler(fileIo, fileIoQueue))
-		group.DELETE("/del/:id", japicore.DeleteHandler(fileIo, fileIoQueue))
+	group.WithGroup("/fid", func(group *bunrouter.Group) {
+		group.GET("/download/:id", coreSession.DownloadByFidHandler())
+		group.GET("/d/:id", coreSession.DownloadByFidHandler())
+		group.GET("/ipfs/:id", coreSession.IpfsHandler())
+
+		group.POST("/upload", coreSession.UploadByPathHandler())
+		group.POST("/u", coreSession.UploadByPathHandler())
+		group.DELETE("/del/:id", coreSession.DeleteByFidHandler())
+	})
+
+	group.WithGroup("/p", func(group *bunrouter.Group) {
+		group.GET("/downloadfrombulk/*location", coreSession.BasicDownloadFromBulkByPathHandler())
+		group.GET("/download/*location", coreSession.BasicDownloadByPathHandler())
+		group.GET("/d/*location", coreSession.BasicDownloadByPathHandler())
+
+		group.POST("/import", coreSession.ImportHandler())
+		group.POST("/upload", coreSession.UploadByPathHandler())
+		group.POST("/u", coreSession.UploadByPathHandler())
+		group.DELETE("/delfrombulk/:filename/*location", coreSession.BasicDeleteFromBulkByPathHandler())
+		group.DELETE("/del/:filename/*location", coreSession.BasicDeleteByPathHandler())
 	})
 
 	port := jutils.LoadEnvVarOrFallback("JAPI_PORT", "3535")
@@ -46,11 +58,16 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("🌍 Started JHN: http://0.0.0.0:%d\n", portNum)
+	fmt.Println("<<<<< * >>>>>")
+	fmt.Printf("🌍 Started JAPI: http://0.0.0.0:%d\n", portNum)
 	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", portNum), handler)
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("🌍 JAPI Wallet: %s\n", coreSession.Wallet.GetAddress())
+	fmt.Printf("🌍 JAPI Network: %s\n", coreSession.Wallet.GetChainID())
+	fmt.Println("<<<<< * >>>>>")
 
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("Server Closed\n")
