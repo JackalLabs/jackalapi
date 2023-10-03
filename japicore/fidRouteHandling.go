@@ -116,7 +116,7 @@ func (j JApiCore) DeleteByFidHandler() bunrouter.HandlerFunc {
 
 		// message := createJsonResponse("Deletion complete")
 		message := createJsonResponse("Deletion Not Implemented")
-		condensedWriteJSON(w, message)
+		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
 }

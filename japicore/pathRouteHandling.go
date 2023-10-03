@@ -84,7 +84,7 @@ func (j JApiCore) deleteByPathCore(operatingRoot string, delFunc func(num int64)
 		}
 
 		message := createJsonResponse("Deletion complete")
-		condensedWriteJSON(w, message)
+		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
 }
@@ -118,7 +118,7 @@ func (j JApiCore) ImportHandler() bunrouter.HandlerFunc {
 		wg.Wait()
 
 		message := createJsonResponse("Import complete")
-		condensedWriteJSON(w, message)
+		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
 }
@@ -187,7 +187,7 @@ func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 		}
 
 		message := createJsonResponse("Upload complete")
-		condensedWriteJSON(w, message)
+		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
 }

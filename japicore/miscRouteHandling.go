@@ -36,7 +36,7 @@ func (j JApiCore) MethodNotAllowedHandler() bunrouter.HandlerFunc {
 func (j JApiCore) VersionHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		message := createJsonResponse("")
-		condensedWriteJSON(w, message)
+		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
 }

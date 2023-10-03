@@ -2,6 +2,9 @@ package jutils
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
 )
 
 func CloneBytes(reader *bytes.Reader) []byte {
@@ -38,4 +41,18 @@ func CloneByteSlice(source []byte) ([]byte, []byte, error) {
 	}
 
 	return firstSlice, SecondSlice, nil
+}
+
+func SimpleWriteJSON(w http.ResponseWriter, respVal interface{}) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(respVal); err != nil {
+		ProcessHttpError("SimpleWriteJSON", err, 500, w)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	written, err := w.Write(buf.Bytes())
+	if err != nil {
+		fmt.Printf("Written bytes: %d\n", written)
+		ProcessError("SimpleWriteJSON", err)
+	}
 }
