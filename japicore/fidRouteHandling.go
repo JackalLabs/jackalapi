@@ -1,7 +1,6 @@
 package japicore
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"strings"
@@ -43,11 +42,14 @@ func (j JApiCore) IpfsHandler() bunrouter.HandlerFunc {
 				return err
 			}
 
-			byteReader := bytes.NewReader(byteBuffer.Bytes())
-			workingBytes := jutils.CloneBytes(byteReader)
-			allBytes = jutils.CloneBytes(byteReader)
+			clonedBytes1, clonedBytes2, err := jutils.CloneByteSlice(byteBuffer.Bytes())
+			if err != nil {
+				jutils.ProcessHttpError("httpGetFileRequest", err, 404, w)
+				return err
+			}
+			allBytes = clonedBytes2
 
-			fid := processUpload(w, j.FileIo, workingBytes, cid, operatingRoot, j.FileIoQueue)
+			fid := processUpload(w, j.FileIo, clonedBytes1, cid, operatingRoot, j.FileIoQueue)
 			if len(fid) == 0 {
 				warning := "Failed to get FID post-upload"
 				return jutils.ProcessCustomHttpError("IpfsHandler", warning, 500, w)
