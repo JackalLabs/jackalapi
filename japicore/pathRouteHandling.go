@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/JackalLabs/jackalapi/jutils"
+	"github.com/JackalLabs/jutils"
 	"github.com/uptrace/bunrouter"
 )
 

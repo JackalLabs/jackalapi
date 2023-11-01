@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/JackalLabs/jackalapi/jutils"
+	"github.com/JackalLabs/jutils"
 )
 
 func httpGetFileRequest(w http.ResponseWriter, host string, path string) (bytes.Buffer, error) {

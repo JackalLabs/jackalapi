@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
+	"github.com/JackalLabs/jutils"
 )
 
 type ScrapeQueue struct {

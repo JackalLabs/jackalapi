@@ -3,9 +3,9 @@ package japicore
 import (
 	"strings"
 
-	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
 	"github.com/JackalLabs/jackalgo/handlers/wallet_handler"
+	"github.com/JackalLabs/jutils"
 )
 
 func InitWalletSession() (*wallet_handler.WalletHandler, *file_io_handler.FileIoHandler) {
