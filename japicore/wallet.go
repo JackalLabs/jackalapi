@@ -1,7 +1,7 @@
 package japicore
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
@@ -13,6 +13,11 @@ func InitWalletSession() (*wallet_handler.WalletHandler, *file_io_handler.FileIo
 	rpc := jutils.LoadEnvVarOrFallback("JAPI_RPC", "https://jackal-testnet-rpc.polkachu.com:443")
 	chainid := jutils.LoadEnvVarOrFallback("JAPI_CHAIN", "lupulella-2")
 	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+
+	if !strings.HasPrefix(operatingRoot, "s/") {
+		warning := "operatingRoot must start with \"s/\""
+		panic(jutils.ProcessCustomError("InitWalletSession - HasPrefix", warning))
+	}
 
 	wallet, err := wallet_handler.NewWalletHandler(
 		seed, // slim odor fiscal swallow piece tide naive river inform shell dune crunch canyon ten time universe orchard roast horn ritual siren cactus upon forum
@@ -27,7 +32,7 @@ func InitWalletSession() (*wallet_handler.WalletHandler, *file_io_handler.FileIo
 		panic(err)
 	}
 
-	_, err = fileIo.DownloadFolder(fmt.Sprintf("s/%s", operatingRoot))
+	_, err = fileIo.DownloadFolder(operatingRoot)
 	if err != nil {
 		_, err = fileIo.GenerateInitialDirs([]string{operatingRoot})
 		if err != nil {

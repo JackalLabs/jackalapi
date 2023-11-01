@@ -29,6 +29,7 @@ var tt = []testCase{
 	{
 		name:        "env var exists",
 		varId:       "MOCK_ENV_VAR",
+		fallBack:    "",
 		shouldPanic: false,
 	},
 	{
@@ -123,6 +124,21 @@ func TestFriendlyTimestamp(t *testing.T) {
 
 func TestUnixMsTimestamp(t *testing.T) {
 	// TODO - add test
+}
+
+// Keyring funcs
+func TestContextKeyring(t *testing.T) {
+	r := require.New(t)
+	keyring := MakeContextKeyring()
+
+	baselineKey := keyring.UseKey("ReqUniquePath")
+	keyring.AddKeyToRing("Testing")
+	testingKey := keyring.UseKey("Testing")
+
+	r.IsType(keyring, ContextKeyring{})
+	r.IsType(baselineKey, "")
+	r.IsType(testingKey, "")
+	r.Equal(len(keyring), 2)
 }
 
 // Error funcs
