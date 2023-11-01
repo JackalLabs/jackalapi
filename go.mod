@@ -3,7 +3,7 @@ module github.com/JackalLabs/jackalapi
 go 1.21
 
 require (
-	github.com/JackalLabs/jackalgo v0.0.4
+	github.com/JackalLabs/jackalgo v0.0.5
 	github.com/JackalLabs/jutils v1.0.0
 	github.com/rs/cors v1.10.1
 	github.com/uptrace/bunrouter v1.0.20
