@@ -79,8 +79,8 @@ github.com/JackalLabs/canine-provider v1.0.10-beta.1.0.20230626192716-041b1c701a
 github.com/JackalLabs/canine-provider v1.0.10-beta.1.0.20230626192716-041b1c701abd/go.mod h1:73IyiWJUVcVlDla0nSOUNma2+qnvuZvMArEpnLcSVco=
 github.com/JackalLabs/cosmos-sdk-new v0.45.17-0.20230704034202-b88b1fbc9b2f h1:yiMZXfLKf8j60mcc78EGd4JthE23WAwxOC0UgQt6Mww=
 github.com/JackalLabs/cosmos-sdk-new v0.45.17-0.20230704034202-b88b1fbc9b2f/go.mod h1:bScuNwWAP0TZJpUf+SHXRU3xGoUPp+X9nAzfeIXts40=
-github.com/JackalLabs/jackalgo v0.0.3 h1:Y+7BwjqvrDGktox7D3zBVjQRQy2db2JKJsWvjiRObwE=
-github.com/JackalLabs/jackalgo v0.0.3/go.mod h1:mbFEsh2V5TgoNs0DDCm32hSxSZG+sNaMFh+GVAgQBPs=
+github.com/JackalLabs/jackalgo v0.0.4 h1:3dEVLfja/l8Y5nQinUAj5dUSTzBa1mkp+SQVjg0SyQ0=
+github.com/JackalLabs/jackalgo v0.0.4/go.mod h1:ed/6e1j25gU3ZELbg9+TI+wlSyajv7xbioxugoXsIIg=
 github.com/JackalLabs/jutils v1.0.0 h1:7sD85oNuXjekKNCTUzlLQ8ycyw3q+DGSIj2hIESMMd8=
 github.com/JackalLabs/jutils v1.0.0/go.mod h1:gw6DDJYgCRFskeDQNa/hvPXiwBin0B5RIY4V7X/JomM=
 github.com/Joker/hpp v1.0.0/go.mod h1:8x5n+M1Hp5hC0g8okX3sR3vFQwynaX/UgSOM9MeBKzY=
