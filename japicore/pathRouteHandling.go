@@ -179,16 +179,7 @@ func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 			return jutils.ProcessCustomHttpError("processUpload", warning, 500, w)
 		}
 
-		successfulUpload := UploadResponse{
-			FID: fid,
-		}
-		err = json.NewEncoder(w).Encode(successfulUpload)
-		if err != nil {
-			jutils.ProcessHttpError("JSONSuccessEncode", err, 500, w)
-			return err
-		}
-
-		message := createJsonResponse("Upload complete")
+		message := createJsonResponse(fid)
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
