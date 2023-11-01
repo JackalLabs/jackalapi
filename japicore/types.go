@@ -46,6 +46,8 @@ func InitJApiCore() *JApiCore {
 	fileIoQueue := NewFileIoQueue()
 	scrapeQueue := NewScrapeQueue(fileIoQueue)
 
+	go fileIoQueue.Listen()
+
 	core := JApiCore{
 		FileIo:      fileIo,
 		FileIoQueue: fileIoQueue,

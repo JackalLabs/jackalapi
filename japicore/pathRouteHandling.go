@@ -30,6 +30,7 @@ func (j JApiCore) downloadByPathCore(operatingRoot string, reportFunc func(num i
 
 		handler, err := j.FileIo.DownloadFile(operatingRoot)
 		if err != nil {
+			jutils.ProcessError("DownloadFile", err)
 			return err
 		}
 
@@ -125,7 +126,8 @@ func (j JApiCore) ImportHandler() bunrouter.HandlerFunc {
 
 func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+		JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+		operatingRoot := "s/" + JAPI_OP_ROOT
 		var byteBuffer bytes.Buffer
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -198,7 +200,8 @@ func (j JApiCore) BasicDownloadFromBulkByPathHandler() bunrouter.HandlerFunc {
 }
 
 func (j JApiCore) BasicDownloadByPathHandler() bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.downloadByPathCore(operatingRoot, func(num int64) {})
 }
 
@@ -208,7 +211,8 @@ func (j JApiCore) BasicDeleteFromBulkByPathHandler() bunrouter.HandlerFunc {
 }
 
 func (j JApiCore) BasicDeleteByPathHandler() bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.deleteByPathCore(operatingRoot, func(num int64) {})
 }
 
@@ -218,7 +222,8 @@ func (j JApiCore) AdvancedDownloadFromBulkByPathHandler(reportFunc func(num int6
 }
 
 func (j JApiCore) AdvancedDownloadByPathHandler(reportFunc func(num int64)) bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.downloadByPathCore(operatingRoot, reportFunc)
 }
 
@@ -228,6 +233,7 @@ func (j JApiCore) AdvancedDeleteFromBulkByPathHandler(delFunc func(num int64)) b
 }
 
 func (j JApiCore) AdvancedDeleteByPathHandler(delFunc func(num int64)) bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.deleteByPathCore(operatingRoot, delFunc)
 }
