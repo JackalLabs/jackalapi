@@ -235,10 +235,10 @@ func (j JApiCore) UploadMultiByPathHandler() bunrouter.HandlerFunc {
 				return err
 			}
 
-			go func(ch chan string, wg *sync.WaitGroup) {
+			go func(filename string, ch chan string, wg *sync.WaitGroup) {
 				defer wg.Done()
-				ch <- processUpload(w, j.FileIo, byteBuffer.Bytes(), fh.Filename, operatingRoot, j.FileIoQueue)
-			}(fidChannel, &wg)
+				ch <- processUpload(w, j.FileIo, byteBuffer.Bytes(), filename, operatingRoot, j.FileIoQueue)
+			}(fh.Filename, fidChannel, &wg)
 		}
 		wg.Wait()
 		close(fidChannel)

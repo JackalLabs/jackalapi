@@ -27,7 +27,7 @@ func InitWalletSession() (*wallet_handler.WalletHandler, *file_io_handler.FileIo
 		panic(err)
 	}
 
-	//fileIo, err := file_io_handler.NewFileIoHandler(wallet.WithGas("250000"))
+	// fileIo, err := file_io_handler.NewFileIoHandler(wallet.WithGas("250000"))
 	fileIo, err := file_io_handler.NewFileIoHandler(wallet)
 	if err != nil {
 		panic(err)
