@@ -6,23 +6,29 @@ import (
 
 	"github.com/uptrace/bunrouter"
 
-	"github.com/JackalLabs/jackalapi/jutils"
 	"github.com/JackalLabs/jackalgo/handlers/file_io_handler"
 	"github.com/JackalLabs/jackalgo/handlers/file_upload_handler"
+	"github.com/JackalLabs/jutils"
 )
 
 func processUpload(w http.ResponseWriter, fileIo *file_io_handler.FileIoHandler, bytes []byte, cid string, pathSelect string, queue *FileIoQueue) string {
-	path := queue.GetRoot(pathSelect)
-	fileUpload, err := file_upload_handler.TrackVirtualFile(bytes, cid, path)
+	fileUpload, err := file_upload_handler.TrackVirtualFile(bytes, cid, pathSelect)
 	if err != nil {
 		jutils.ProcessHttpError("TrackVirtualFile", err, 500, w)
 		return ""
 	}
 
-	folder, err := fileIo.DownloadFolder(path)
+	folder, msgs, err := fileIo.LoadNestedFolder(pathSelect)
 	if err != nil {
-		jutils.ProcessHttpError("DownloadFolder", err, 404, w)
+		jutils.ProcessHttpError("LoadNestedFolder", err, 404, w)
 		return ""
+	}
+	if len(msgs) > 0 {
+		err = fileIo.SignAndBroadcast(msgs)
+		if err != nil {
+			jutils.ProcessHttpError("SignAndBroadcast", err, 500, w)
+			return ""
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -41,7 +47,7 @@ func processUpload(w http.ResponseWriter, fileIo *file_io_handler.FileIoHandler,
 }
 
 func readUniquePath(req bunrouter.Request) string {
-	uniquePath, ok := req.Context().Value(jutils.ReqUniquePath{}).(string)
+	uniquePath, ok := req.Context().Value(jutils.BasicKeyring.UseKey("ReqUniquePath")).(string)
 	if !ok {
 		return ""
 	}

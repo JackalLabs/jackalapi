@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/JackalLabs/jackalapi/jutils"
+	"github.com/JackalLabs/jutils"
 	"github.com/uptrace/bunrouter"
 )
 
@@ -30,6 +30,7 @@ func (j JApiCore) downloadByPathCore(operatingRoot string, reportFunc func(num i
 
 		handler, err := j.FileIo.DownloadFile(operatingRoot)
 		if err != nil {
+			jutils.ProcessError("DownloadFile", err)
 			return err
 		}
 
@@ -83,7 +84,7 @@ func (j JApiCore) deleteByPathCore(operatingRoot string, delFunc func(num int64)
 			return err
 		}
 
-		message := createJsonResponse("Deletion complete")
+		message := createJsonResponse("Deletion complete", []string{})
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
@@ -117,7 +118,7 @@ func (j JApiCore) ImportHandler() bunrouter.HandlerFunc {
 
 		wg.Wait()
 
-		message := createJsonResponse("Import complete")
+		message := createJsonResponse("Import complete", []string{})
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
@@ -125,7 +126,8 @@ func (j JApiCore) ImportHandler() bunrouter.HandlerFunc {
 
 func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
-		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+		JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+		operatingRoot := "s/" + JAPI_OP_ROOT
 		var byteBuffer bytes.Buffer
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -177,16 +179,76 @@ func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 			return jutils.ProcessCustomHttpError("processUpload", warning, 500, w)
 		}
 
-		successfulUpload := UploadResponse{
-			FID: fid,
+		message := createJsonResponse("1 file uploaded", []string{fid})
+		jutils.SimpleWriteJSON(w, message)
+		return nil
+	}
+}
+
+func (j JApiCore) UploadMultiByPathHandler() bunrouter.HandlerFunc {
+	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+		operatingRoot := "s/" + JAPI_OP_ROOT
+		var wg sync.WaitGroup
+		MaxFileSize := int64(32 << 30)
+
+		envSize := jutils.LoadEnvVarOrFallback("JAPI_MAX_FILE", "")
+		if len(envSize) > 0 {
+			envParse, err := strconv.Atoi(envSize)
+			if err != nil {
+				return err
+			}
+			MaxFileSize = int64(envParse)
 		}
-		err = json.NewEncoder(w).Encode(successfulUpload)
+
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+
+		subFolder := req.FormValue("subfolder")
+		if len(subFolder) > 0 {
+			operatingRoot += "/" + subFolder
+		}
+
+		err := req.ParseMultipartForm(MaxFileSize) // MAX file size lives here
 		if err != nil {
-			jutils.ProcessHttpError("JSONSuccessEncode", err, 500, w)
+			jutils.ProcessHttpError("ParseMultipartForm", err, 400, w)
 			return err
 		}
 
-		message := createJsonResponse("Upload complete")
+		fhs := req.MultipartForm.File["files"]
+		fidChannel := make(chan string, len(fhs))
+		for _, fh := range fhs {
+			var byteBuffer bytes.Buffer
+
+			wg.Add(1)
+			file, err := fh.Open()
+			if err != nil {
+				jutils.ProcessError("ParseMultipartForm", err)
+				return err
+			}
+
+			_, err = io.Copy(&byteBuffer, file)
+			if err != nil {
+				jutils.ProcessError("ParseMultipartForm", err)
+				return err
+			}
+
+			go func(filename string, ch chan string, wg *sync.WaitGroup) {
+				defer wg.Done()
+				ch <- processUpload(w, j.FileIo, byteBuffer.Bytes(), filename, operatingRoot, j.FileIoQueue)
+			}(fh.Filename, fidChannel, &wg)
+		}
+		wg.Wait()
+		close(fidChannel)
+
+		var allFids []string
+		for fid := range fidChannel {
+			allFids = append(allFids, fid)
+		}
+
+		message := createJsonResponse("All files uploaded", allFids)
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
@@ -198,7 +260,8 @@ func (j JApiCore) BasicDownloadFromBulkByPathHandler() bunrouter.HandlerFunc {
 }
 
 func (j JApiCore) BasicDownloadByPathHandler() bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.downloadByPathCore(operatingRoot, func(num int64) {})
 }
 
@@ -208,7 +271,8 @@ func (j JApiCore) BasicDeleteFromBulkByPathHandler() bunrouter.HandlerFunc {
 }
 
 func (j JApiCore) BasicDeleteByPathHandler() bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.deleteByPathCore(operatingRoot, func(num int64) {})
 }
 
@@ -218,7 +282,8 @@ func (j JApiCore) AdvancedDownloadFromBulkByPathHandler(reportFunc func(num int6
 }
 
 func (j JApiCore) AdvancedDownloadByPathHandler(reportFunc func(num int64)) bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.downloadByPathCore(operatingRoot, reportFunc)
 }
 
@@ -228,6 +293,7 @@ func (j JApiCore) AdvancedDeleteFromBulkByPathHandler(delFunc func(num int64)) b
 }
 
 func (j JApiCore) AdvancedDeleteByPathHandler(delFunc func(num int64)) bunrouter.HandlerFunc {
-	operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "s/JAPI")
+	JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.deleteByPathCore(operatingRoot, delFunc)
 }

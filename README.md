@@ -35,7 +35,7 @@ Other Networks
 
 Root Directories
 
-* JAPI_OP_ROOT - `s/JAPI`
+* JAPI_OP_ROOT - `JAPI`
 * JAPI_IPFS_ROOT - `s/JAPI/IPFS`
 * JAPI_BULK_ROOT - `s/JAPI/Bulk`
 

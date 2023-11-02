@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/JackalLabs/jackalapi/jutils"
+	"github.com/JackalLabs/jutils"
 	"github.com/uptrace/bunrouter"
 )
 
@@ -13,13 +13,12 @@ func (j JApiCore) IpfsHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		var allBytes []byte
 
-		operatingRoot := jutils.LoadEnvVarOrFallback("JAPI_IPFS_ROOT", "s/JAPI/IPFS")
+		JAPI_IPFS_ROOT := jutils.LoadEnvVarOrFallback("JAPI_IPFS_ROOT", "s/JAPI/IPFS")
 		gateway := jutils.LoadEnvVarOrFallback("JAPI_IPFS_GATEWAY", "https://ipfs.io/ipfs/")
-		toClone := false
+		operatingRoot := "s/" + JAPI_IPFS_ROOT
+
 		cloneHeader := req.Header.Get("J-Clone-Ipfs")
-		if strings.ToLower(cloneHeader) == "true" {
-			toClone = true
-		}
+		toClone := strings.ToLower(cloneHeader) == "true"
 
 		id := req.Param("id")
 		if len(id) == 0 {
@@ -115,7 +114,7 @@ func (j JApiCore) DeleteByFidHandler() bunrouter.HandlerFunc {
 		//}
 
 		// message := createJsonResponse("Deletion complete")
-		message := createJsonResponse("Deletion Not Implemented")
+		message := createJsonResponse("Deletion Not Implemented", []string{})
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}

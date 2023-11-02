@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/JackalLabs/jackalapi/japicore"
-	"github.com/JackalLabs/jackalapi/jutils"
+	"github.com/JackalLabs/jutils"
 	"github.com/rs/cors"
 	"github.com/uptrace/bunrouter"
 )

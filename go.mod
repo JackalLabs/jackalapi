@@ -1,11 +1,11 @@
 module github.com/JackalLabs/jackalapi
 
-go 1.20
+go 1.21
 
 require (
-	github.com/JackalLabs/jackalgo v0.0.3
+	github.com/JackalLabs/jackalgo v0.0.5
+	github.com/JackalLabs/jutils v1.0.0
 	github.com/rs/cors v1.10.1
-	github.com/stretchr/testify v1.8.4
 	github.com/uptrace/bunrouter v1.0.20
 )
 
@@ -113,6 +113,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.16.0 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
