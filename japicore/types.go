@@ -21,13 +21,15 @@ type fileScrape struct {
 }
 
 type jsonResponse struct {
-	Module  string `json:"module"`
-	Version string `json:"version"`
-	Message string `json:"message"`
+	Fids    []string `json:"fids"`
+	Message string   `json:"message"`
+	Module  string   `json:"module"`
+	Version string   `json:"version"`
 }
 
-func createJsonResponse(message string) jsonResponse {
+func createJsonResponse(message string, fids []string) jsonResponse {
 	return jsonResponse{
+		Fids:    fids,
 		Message: message,
 		Module:  Module,
 		Version: Version,

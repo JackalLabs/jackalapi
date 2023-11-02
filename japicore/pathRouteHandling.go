@@ -84,7 +84,7 @@ func (j JApiCore) deleteByPathCore(operatingRoot string, delFunc func(num int64)
 			return err
 		}
 
-		message := createJsonResponse("Deletion complete")
+		message := createJsonResponse("Deletion complete", []string{})
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
@@ -118,7 +118,7 @@ func (j JApiCore) ImportHandler() bunrouter.HandlerFunc {
 
 		wg.Wait()
 
-		message := createJsonResponse("Import complete")
+		message := createJsonResponse("Import complete", []string{})
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
@@ -179,7 +179,76 @@ func (j JApiCore) UploadByPathHandler() bunrouter.HandlerFunc {
 			return jutils.ProcessCustomHttpError("processUpload", warning, 500, w)
 		}
 
-		message := createJsonResponse(fid)
+		message := createJsonResponse("1 file uploaded", []string{fid})
+		jutils.SimpleWriteJSON(w, message)
+		return nil
+	}
+}
+
+func (j JApiCore) UploadMultiByPathHandler() bunrouter.HandlerFunc {
+	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+		operatingRoot := "s/" + JAPI_OP_ROOT
+		var wg sync.WaitGroup
+		MaxFileSize := int64(32 << 30)
+
+		envSize := jutils.LoadEnvVarOrFallback("JAPI_MAX_FILE", "")
+		if len(envSize) > 0 {
+			envParse, err := strconv.Atoi(envSize)
+			if err != nil {
+				return err
+			}
+			MaxFileSize = int64(envParse)
+		}
+
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+
+		subFolder := req.FormValue("subfolder")
+		if len(subFolder) > 0 {
+			operatingRoot += "/" + subFolder
+		}
+
+		err := req.ParseMultipartForm(MaxFileSize) // MAX file size lives here
+		if err != nil {
+			jutils.ProcessHttpError("ParseMultipartForm", err, 400, w)
+			return err
+		}
+
+		fhs := req.MultipartForm.File["files"]
+		fidChannel := make(chan string, len(fhs))
+		for _, fh := range fhs {
+			var byteBuffer bytes.Buffer
+
+			wg.Add(1)
+			file, err := fh.Open()
+			if err != nil {
+				jutils.ProcessError("ParseMultipartForm", err)
+				return err
+			}
+
+			_, err = io.Copy(&byteBuffer, file)
+			if err != nil {
+				jutils.ProcessError("ParseMultipartForm", err)
+				return err
+			}
+
+			go func(ch chan string, wg *sync.WaitGroup) {
+				defer wg.Done()
+				ch <- processUpload(w, j.FileIo, byteBuffer.Bytes(), fh.Filename, operatingRoot, j.FileIoQueue)
+			}(fidChannel, &wg)
+		}
+		wg.Wait()
+		close(fidChannel)
+
+		var allFids []string
+		for fid := range fidChannel {
+			allFids = append(allFids, fid)
+		}
+
+		message := createJsonResponse("All files uploaded", allFids)
 		jutils.SimpleWriteJSON(w, message)
 		return nil
 	}
