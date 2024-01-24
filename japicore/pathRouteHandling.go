@@ -304,10 +304,6 @@ func (j JApiCore) LoadFolderContentsByPathHandler() bunrouter.HandlerFunc {
 		operatingRoot := "s/" + JAPI_OP_ROOT
 
 		location := req.Param("location")
-		if len(location) == 0 {
-			warning := "Failed to get Location"
-			return jutils.ProcessCustomHttpError("LoadFolderContentsByPathHandler", warning, 404, w)
-		}
 
 		uniquePath := readUniquePath(req)
 		if len(uniquePath) > 0 {
