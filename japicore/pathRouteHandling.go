@@ -297,3 +297,31 @@ func (j JApiCore) AdvancedDeleteByPathHandler(delFunc func(num int64)) bunrouter
 	operatingRoot := "s/" + JAPI_OP_ROOT
 	return j.deleteByPathCore(operatingRoot, delFunc)
 }
+
+func (j JApiCore) LoadFolderContentsByPathHandler(reportFunc func(num int64)) bunrouter.HandlerFunc {
+	return func(w http.ResponseWriter, req bunrouter.Request) error {
+		JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
+		operatingRoot := "s/" + JAPI_OP_ROOT
+
+		location := req.Param("location")
+		if len(location) == 0 {
+			warning := "Failed to get Location"
+			return jutils.ProcessCustomHttpError("LoadFolderContentsByPathHandler", warning, 404, w)
+		}
+
+		uniquePath := readUniquePath(req)
+		if len(uniquePath) > 0 {
+			operatingRoot += "/" + uniquePath
+		}
+		operatingRoot += "/" + location
+
+		folder, _, err := j.FileIo.LoadNestedFolder(operatingRoot)
+		if err != nil {
+			jutils.ProcessHttpError("LoadNestedFolder", err, 404, w)
+			return err
+		}
+
+		jutils.SimpleWriteJSON(w, folder.GetFolderDetails())
+		return nil
+	}
+}
