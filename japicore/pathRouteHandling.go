@@ -298,7 +298,7 @@ func (j JApiCore) AdvancedDeleteByPathHandler(delFunc func(num int64)) bunrouter
 	return j.deleteByPathCore(operatingRoot, delFunc)
 }
 
-func (j JApiCore) LoadFolderContentsByPathHandler(reportFunc func(num int64)) bunrouter.HandlerFunc {
+func (j JApiCore) LoadFolderContentsByPathHandler() bunrouter.HandlerFunc {
 	return func(w http.ResponseWriter, req bunrouter.Request) error {
 		JAPI_OP_ROOT := jutils.LoadEnvVarOrFallback("JAPI_OP_ROOT", "JAPI")
 		operatingRoot := "s/" + JAPI_OP_ROOT
